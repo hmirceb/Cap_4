@@ -36,7 +36,6 @@ matriz_Perdiver<-PERDIVER_insectos %>%
   mutate(genus = unlist(lapply(strsplit(Species, '_'), function(x) x[1]))) %>%
   dplyr::rename(species = Species, family = Family_final, order = Order_final) %>%
   dplyr::select(c(species, genus, family, order)) %>%
-  filter(species != "Pseudisotoma_monochaeta") %>%
   distinct() 
 
 matriz_completas<-matriz_Perdiver %>%
