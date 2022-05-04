@@ -32,3 +32,4 @@ PERDIVER<-PERDIVER_Stand_NCBI %>%
 PERDIVER[PERDIVER$Species == 'Gisinurus_sp.1',]$Order_final<-'Symphypleona'
 
 save(PERDIVER, file = 'C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData')
+save(PERDIVER, file = '~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData')
