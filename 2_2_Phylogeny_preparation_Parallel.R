@@ -118,7 +118,7 @@ filo_perdiver<-foreach(K = 1:n_trees,
     arbol<-int.node(phylogeny = arbol,
                     location.node = temp_node,
                     tip.label = missing_sps_with_family[i],
-                    position = runif(1))
+                    position = runif(n = 1, min = 0.1, max = 0.9))
     
   }
   
@@ -146,7 +146,7 @@ filo_perdiver<-foreach(K = 1:n_trees,
     arbol<-ext.node(phylogeny = arbol,
                     location.tip = temp_node,
                     tip.label = missing_sps[i],
-                    position = runif(1))
+                    position = runif(n = 1, min = 0.1, max = 0.9))
   }
   
   
