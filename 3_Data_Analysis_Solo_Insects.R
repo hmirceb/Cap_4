@@ -165,7 +165,6 @@ emmeans(mod2, specs = 'UM_s', type = 'response')
 
 car::Anova(mod1)
 car::Anova(mod2)
-confint(mod0)
 
 ### TAXO Beta diversity
 # Distancia con bray curtis (considera las abundancias)
@@ -242,9 +241,6 @@ for (i in 1:length(unique(PERDIVER$Host))) {
 PERDIVER_alpha_filo<-as.data.frame(cbind(PERDIVER_sitesXsps_filo[,c(1:3)], 
                                          do.call('rbind', temp_mpd)))
 
-mod_p<-lm(Dist_cent~UM_s+(1|Host),
-          family = 'gaussian', 
-          data = PERDIVER_pd)
 mod_p0<-lmer(-mpd.obs.z~UM_s+(1|Host), 
              data = PERDIVER_alpha_filo)
 
@@ -298,16 +294,6 @@ Beta_Total_Filo<-bind_rows(data.frame('NMDS1' = filo_points_tot[,1],
                                       'Comp' = 'Total'))
 
 
-ggplot(bind_rows(Beta_Total_taxo, Beta_Total_Filo), aes(x = NMDS1, y = NMDS2))+
-  geom_hline(yintercept = 0, linetype = 'dashed', alpha = 0.3)+
-  geom_vline(xintercept = 0, linetype = 'dashed', alpha = 0.3)+
-  geom_point(aes(fill = Host, shape = UM_s), size = 3, color = 'black')+
-  geom_polygon(aes(group = interaction(Host, UM_s), color = Host), alpha = 0)+
-  coord_fixed()+
-  theme_bw()+
-  scale_shape_manual(values = c('S' = 22, 'L' = 21))+
-  facet_wrap(~Type+Comp)
-
 Filo_dist_groups<-dist_groups(PERDIVER_beta_filo, g = PERDIVER_sitesXsps_filo$UM_s) %>% 
   rename(UM_s = Label) %>%
   dplyr::select(c(UM_s)) %>%
@@ -344,8 +330,11 @@ ggarrange(ggplot(Beta_Total_taxo, aes(x = NMDS1, y = NMDS2))+
 
 #### Son las distancias taxo y filo mayores? ####
 Total_dists_groups<-Taxo_dist_groups %>%
+  mutate(across(Item1:Item2, as.character)) %>%
   mutate(Type = 'Taxo') %>%
-  bind_rows(Filo_dist_groups %>% mutate(Type = 'Filo'))
+  bind_rows(Filo_dist_groups %>% 
+              mutate(Type = 'Filo') %>% 
+              mutate(across(Item1:Item2, as.character)))
 
 mod1<-lmer(Distance~UM_s*Type+(1|Label), Total_dists_groups)
 DHARMa::simulateResiduals(mod1, plot = T)
