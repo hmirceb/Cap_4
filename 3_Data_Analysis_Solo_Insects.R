@@ -375,62 +375,27 @@ ggplot(dist_contrast, aes(x = Type, y = emmean))+
 
 #### Probamos a calcular la pendiente de la curva que hace los numeros de hill
 #### como medida de evenness
-dat<-bind_rows(PERDIVER_alpha_taxo %>%
-                 pivot_longer(cols = c('0':'2'), 
-                              names_to = 'div') %>%
-                 mutate(div = as.numeric(div)) %>%
-                 dplyr::select(c(Host, UM, UM_s, div, value)) %>%
-                 mutate(Type = 'Taxo'), 
-               PERDIVER_alpha_filo %>%
-                 pivot_longer(cols = c('0':'2'), 
-                              names_to = 'div') %>%
-                 mutate(div = as.numeric(div)) %>%
-                 dplyr::select(c(Host, UM, UM_s, div, value)) %>%
-                 mutate(Type = 'Phylo'))
+PERDIVER_alpha_taxo$Even_10<-PERDIVER_alpha_taxo$`2`/PERDIVER_alpha_taxo$`1`
 
-dat$dummy<-paste(dat$Host, dat$UM, dat$Type)
-ders<-c()
-for (i in 1:length(unique(dat$dummy))) {
-  ders[[i]]<-abs(max(derivatives(gam(value~s(div), data = dat %>%
-                                   filter(dummy == unique(dat$dummy)[[i]])))$derivative))
-}
+mod2<-lmer(Even_10~UM_s+(1|Host), PERDIVER_alpha_taxo)
+DHARMa::simulateResiduals(mod2, plot = T)
+summary(mod2)
+car::Anova(mod2)
+visreg(mod2)
 
-ders<-as.data.frame(cbind(rbind(PERDIVER_sitesXsps_filo[,c(1:3)],
-                                PERDIVER_sitesXsps_filo[,c(1:3)]), unlist(ders)))
-names(ders)[4]<-'der'
-ders$Type<-rep(c('Taxo', 'Phylo'), each = 24)
-ders$inv<-1/ders$der
 
-mm<-lmer(inv~Type*UM_s+(1|Host), ders)
-summary(mm)
-slope_summary<-summary(emmeans(mm, pairwise~Type | UM_s))
+#### Las poblaciones pequenyas interactuan mas quelas grandes? ####
+PERDIVER_alpha_taxo$N<-apply(PERDIVER_sitesXsps_filo[,-c(1:3)], 1, sum)
 
-slope_contrast<-data.frame(Type = slope_summary$emmeans$Type,
-                          UM_s = slope_summary$emmeans$UM_s,
-                          emmean = slope_summary$emmeans$emmean,
-                          SE = slope_summary$emmeans$SE,
-                          df = slope_summary$emmeans$df,
-                          lower.CL = slope_summary$emmeans$lower.CL,
-                          upper.CL = slope_summary$emmeans$upper.CL)
+mod3<-glmer(N~UM_s+(1|Host), family = 'poisson', PERDIVER_alpha_taxo)
+DHARMa::simulateResiduals(mod3, plot = T)
+summary(mod3)
+car::Anova(mod3)
+visreg(mod3)
 
-ggplot(slope_contrast, aes(x = Type, y = emmean))+
-  geom_point(aes(group = UM_s, color = UM_s),
-             position = position_dodge(width = 0.5),
-             size = 3)+
-  geom_errorbar(aes(group = UM_s, color = UM_s,
-                    ymin = lower.CL, ymax = upper.CL),
-                position = position_dodge(width = 0.5),
-                width = 0.07,
-                size = 1.1)+
-  theme_classic()+
-  ylab('Evenness')+
-  xlab('Type')+
-  theme(text = element_text(size = 20))+
-  geom_jitter(inherit.aes = F,
-              data = ders,
-              aes(x = Type,
-                  y = der, 
-                  color = UM_s,
-                  group = UM_s),
-              position = position_dodge(width = 0.5),
-              alpha = 0.3)
+PERDIVER_alpha_taxo$Prop<-PERDIVER_alpha_taxo$N/PERDIVER_alpha_taxo$`0`
+mod4<-lmer(Prop~UM_s+(1|Host), PERDIVER_alpha_taxo)
+DHARMa::simulateResiduals(mod4, plot = T)
+summary(mod4)
+car::Anova(mod4)
+visreg(mod4)
