@@ -17,11 +17,13 @@ library(emmeans)
 
 load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
 load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/Filo_PERDIVER.Rdata")
-Habitat_PERDIVER<-read_excel("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Datos/Plantas/Habitat_PERDIVER.xlsx")
+plantas_PERDIVER<-read_excel("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Datos/Plantas/Habitat_PERDIVER.xlsx")
+PERDIVER_abiotic<-read_excel("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Datos/PERDIVER_abiotic.xlsx")
 
 load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
 load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/Filo_PERDIVER.Rdata")
-Habitat_PERDIVER<-read_excel("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Datos/Plantas/Habitat_PERDIVER.xlsx")
+plantas_PERDIVER<-read_excel("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Datos/Plantas/Habitat_PERDIVER.xlsx")
+PERDIVER_abiotic<-read_excel("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Datos/PERDIVER_abiotic.xlsx")
 
 
 # Funcion para calcular SD de una lista de matrices
@@ -56,7 +58,7 @@ PERDIVER_sitesXsps_filo<-PERDIVER %>%
   ungroup()
 
 # Matriz de sitios por especies para las plantas coocurrentes
-PLANTS_sitesXsps<-Habitat_PERDIVER %>%
+PLANTS_sitesXsps<-plantas_PERDIVER %>%
   dplyr::select(c(Host, UM, Especie, Abund_perc)) %>%
   mutate(UM_s = ifelse(startsWith(UM, 'S'), 'S', 'L')) %>%
   mutate(Abund_perc = as.numeric(Abund_perc)) %>%
@@ -221,7 +223,7 @@ for (i in 1:length(unique(PERDIVER$Host))) {
     filter(Species %in% filo_perdiver[[1]]$tip.label) %>%
     mutate(UM_s = ifelse(startsWith(UM, 'S'), 'S', 'L')) %>%
     group_by(Host, UM, Species, UM_s) %>%
-    summarize(Host = Host,
+    dplyr::summarize(Host = Host,
               UM = UM,
               UM_s = UM_s,
               Species,
@@ -233,15 +235,15 @@ for (i in 1:length(unique(PERDIVER$Host))) {
                 values_fill = 0) %>%
     ungroup()
   
-  temp_mpd[[i]]<-ses.mpd(samp = as.data.frame(temp[,-c(1:3)]),
+  temp_mpd[[i]]<-cbind(as.data.frame(temp[,c(1:3)]), 
+                       ses.mpd(samp = as.data.frame(temp[,-c(1:3)]),
                          dis = cophenetic_mean, 
-                         abundance.weighted = T)
+                         abundance.weighted = T))
 }
 
-PERDIVER_alpha_filo<-as.data.frame(cbind(PERDIVER_sitesXsps_filo[,c(1:3)], 
-                                         do.call('rbind', temp_mpd)))
+PERDIVER_alpha_filo<-as.data.frame(do.call('rbind', temp_mpd))
 
-mod_p0<-lmer(-mpd.obs.z~UM_s+(1|Host), 
+mod_p0<-lmer(mpd.obs.z~UM_s+(1|Host), 
              data = PERDIVER_alpha_filo)
 
 summary(mod_p0); visreg(mod_p0)
@@ -399,3 +401,65 @@ DHARMa::simulateResiduals(mod4, plot = T)
 summary(mod4)
 car::Anova(mod4)
 visreg(mod4)
+
+
+#### Tabla resumen ####
+
+PERDIVER_taxo_all<-PERDIVER %>%
+  dplyr::select(c(Host, UM, Species)) %>%
+  mutate(UM_s = ifelse(startsWith(UM, 'S'), 'S', 'L')) %>%
+  group_by(Host, UM, Species, UM_s) %>%
+  dplyr::summarize(Host = Host,
+            UM = UM,
+            UM_s = UM_s,
+            Species,
+            n = n()) %>%
+  distinct() %>%
+  pivot_wider(names_from = Species,
+              id_cols = c(Host, UM, UM_s),
+              values_from = n,
+              values_fill = 0) %>%
+  ungroup()
+
+qs<-seq(0, 2, by = 0.1)
+a<-c()
+for (i in 1:length(qs)) {
+  a[[i]]<-hill_taxa(PERDIVER_taxo_all[,-c(1:3)], q = qs[[i]])
+}
+PERDIVER_alpha_taxo_all<-as.data.frame(cbind(PERDIVER_taxo_all[,c(1:3)], 
+                                         do.call('cbind', a)))
+names(PERDIVER_alpha_taxo_all)[-c(1:3)]<-as.character(qs)
+
+PERDIVER_summary<-PERDIVER_alpha_taxo_all %>%
+  dplyr::select(c(Host, UM, UM_s, `0`, `1`, `2`)) %>%
+  mutate(Above_richness = `0`) %>%
+  mutate(Above_shannon = log(`1`)) %>%
+  mutate(Above_simpson = 1-(1/`2`)) %>%
+  dplyr::select(-c(`0`, `1`, `2`)) %>%
+  full_join(PERDIVER_alpha_taxo, c('Host', 'UM', 'UM_s')) %>%
+  left_join(PERDIVER_abiotic, c('Host', 'UM')) %>%
+  mutate(Insect_richness = `0`) %>%
+  mutate(Insect_shannon = log(`1`)) %>%
+  mutate(Insect_simpson = 1-(1/`2`)) %>%
+  mutate(Plant_richness = `0_plants`) %>%
+  mutate(Plant_shannon = log(`1_plants`)) %>%
+  mutate(Plant_simpson = 1-(1/`2_plants`)) %>%
+  dplyr::select(c('Host':'UM_s',
+                  'Above_richness',
+                  'Above_shannon',
+                  'Above_simpson',
+                  'Insect_richness',
+                  'Insect_shannon',
+                  'Insect_simpson',
+                  'Plant_richness',
+                  'Plant_shannon',
+                  'Plant_simpson',
+                  '%_cobertura_vegetal_(suelo)':'Perturbaciones')) %>%
+  left_join(PERDIVER_alpha_filo, c('Host', 'UM', 'UM_s')) %>%
+  dplyr::select(-c(ntaxa, runs)) %>% 
+  dplyr::rename(Insect_mpd.obs = mpd.obs) %>%
+  dplyr::rename(Insect_mpd.obs.z = mpd.obs.z) %>%
+  dplyr::rename(Insect_mpd.obs.p = mpd.obs.p) 
+
+write.table(PERDIVER_summary, file = '~/PERDIVER_tabla.txt', sep = ';', 
+            dec = ',')
