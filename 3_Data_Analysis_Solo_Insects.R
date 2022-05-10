@@ -249,35 +249,6 @@ mod_p0<-lmer(mpd.obs.z~UM_s+(1|Host),
 summary(mod_p0); visreg(mod_p0)
 car::Anova(mod_p0)
 
-plot_hill_insects_filo<-PERDIVER_alpha_filo %>%
-  pivot_longer(cols = c('0':'2'), 
-               names_to = 'q') %>%
-  mutate(q = as.numeric(q)) %>%
-  ggplot(aes(x = q, y = value, color = Host))+
-  geom_line(aes(group = interaction(Host, UM)))+
-  geom_point(data = PERDIVER_alpha_filo %>%
-               pivot_longer(cols = c('0':'2'), 
-                            names_to = 'q') %>%
-               mutate(q = as.numeric(q)) %>%
-               filter(q %in% c(0, 1, 2)),
-             aes(x = q, y = value, 
-                 fill = Host, 
-                 shape = UM_s), 
-             color = 'black', 
-             size = 3,
-             inherit.aes = F)+
-  scale_shape_manual(guide = 'none', values = c('S' = 22, 'L' = 21))+
-  theme_classic()+
-  scale_x_continuous(breaks = c(0, 1, 2))+
-  guides(fill = guide_legend(override.aes=list(shape=21)))+
-  ylab('Phylogenetic diversity')+
-  theme(text = element_text(size = 20))+
-  ggtitle('B')
-
-ggarrange(plot_hill_insects, plot_hill_insects_filo,
-          ncol = 2, legend = 'bottom',
-          common.legend = T)
-
 
 ### Beta diveristy with PDcalc
 PERDIVER_beta_filo_list<-lapply(filo_perdiver, function(y) phyloresembl(x = PERDIVER_sitesXsps_filo[,-c(1:3)],
