@@ -1,10 +1,7 @@
-library(betapart)
 library(vegan)
 library(lme4)
-library(rstanarm)
 library(visreg)
 library(gridExtra)
-library(PhyloMeasures)
 library(picante)
 library(usedist)
 library(tidyverse)
@@ -170,7 +167,7 @@ car::Anova(mod2)
 
 ### TAXO Beta diversity
 # Distancia con bray curtis (considera las abundancias)
-PERDIVER_beta_taxo<-vegdist(PERDIVER_sitesXsps_filo[,-c(1:3)],
+PERDIVER_beta_taxo<-vegdist(decostand(PERDIVER_sitesXsps_filo[,-c(1:3)], 'hellinger'),
                             method = 'bray')
 
 # NMDS con las distancias
@@ -207,6 +204,12 @@ mod<-lmer(Distance~UM_s+(1|Label), Taxo_dist_groups)
 summary(mod)
 visreg(mod)
 car::Anova(mod)
+
+# PERMANOVA, primero indicamos el bloque (la planta) para que tenga en cuenta eso
+perm <- how(nperm = 10000)
+setBlocks(perm) <- with(PERDIVER_sitesXsps_filo, Host)
+adonis2(PERDIVER_beta_taxo~UM_s, data = PERDIVER_sitesXsps_filo,
+        permutations = perm)
 
 ###############################
 #### phylogenetic analysis ####
@@ -251,8 +254,8 @@ car::Anova(mod_p0)
 
 
 ### Beta diveristy with PDcalc
-PERDIVER_beta_filo_list<-lapply(filo_perdiver, function(y) phyloresembl(x = PERDIVER_sitesXsps_filo[,-c(1:3)],
-                                                                              phy = y, incidence = F, 'sorensen'))
+PERDIVER_beta_filo_list<-lapply(filo_perdiver, function(y) phyloresembl(x = decostand(PERDIVER_sitesXsps_filo[,-c(1:3)], 'hellinger'),
+                                                                        phy = y, incidence = F, 'sorensen'))
 
 PERDIVER_beta_filo<-unname(as.dist(mean.list(lapply(PERDIVER_beta_filo_list, function(x) as.matrix(x)))))
 
