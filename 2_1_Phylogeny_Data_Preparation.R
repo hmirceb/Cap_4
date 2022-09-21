@@ -9,6 +9,7 @@ Sys.setenv(ENTREZ_KEY='7c76967d93d4938a1c715afc62fe297a8308')
 
 # Cargamos el arbol actualizado
 insect_tree<-read.tree('C:/Users/18172844S/Dropbox/Insects phylogeny/Datos/Arboles/Chesters_2022.bestTree')
+insect_tree<-read.tree('~/Dropbox/Insects phylogeny/Datos/Arboles/Chesters_2022.bestTree')
 
 # Obtenemos los generos en el arbol
 genera_Chesters<-unique(unlist(lapply(strsplit(insect_tree$tip.label, '_'), function(x) x[1])))

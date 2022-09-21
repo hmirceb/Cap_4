@@ -10,12 +10,12 @@ library(parallel)
 library(foreach)
 
 load("C:/Users/18172844S/Dropbox/Insects phylogeny/Resultados/Datos_base_PERDIVER.RData")
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/Nodes_info_Chester.RData")
+load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
+load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Nodes_info_Chester.RData")
 
 load("~/Dropbox/Insects phylogeny/Resultados/Datos_base_PERDIVER.RData")
-load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
-load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 3 - Plant population size interactions/Resultados/Nodes_info_Chester.RData")
+load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
+load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Nodes_info_Chester.RData")
 
 # Cargamos arboles con familias y subfamilias en los nodos y juntamos los nodos
 insect_tree<-read.tree('C:/Users/18172844S/Dropbox/Insects phylogeny/Datos/Arboles/Chesters_2022.bestTree')
@@ -118,7 +118,7 @@ filo_perdiver<-foreach(K = 1:n_trees,
     arbol<-int.node(phylogeny = arbol,
                     location.node = temp_node,
                     tip.label = missing_sps_with_family[i],
-                    position = runif(n = 1, min = 0.1, max = 0.9))
+                    position = runif(n = 1, min = 0.01, max = 0.99))
     
   }
   
