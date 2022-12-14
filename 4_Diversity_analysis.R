@@ -14,6 +14,11 @@ library(emmeans)
 library(patchwork)
 library(ggnewscale)
 library(car)
+library(ggtext)
+library(ggpattern)
+library(ecodist)
+library(lmerTest)
+rm(list = ls())
 
 load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Diversity_results.RData")
 load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Diversity_results.RData")
@@ -22,9 +27,9 @@ PERDIVER_summary<-PERDIVER_summary %>%
   mutate(`Cobertura_vegetal_(copas)` = as.numeric(ifelse(`Cobertura_vegetal_(copas)` == '0-100', 
                                               50, 
                                               `Cobertura_vegetal_(copas)`))) %>%
-  mutate(across(`%_cobertura_vegetal_(suelo)`:`Arcillas_<2_μm_taubner`, 
+  mutate(across(13:22, 
                 scale)) %>%
-  mutate(across(`conductividad_(us/cm)`:`%MO`, 
+  mutate(across(24:30, 
                 scale))
 
 paleta_plantas<-c('cypcal' = '#1f78b4', 'pinlon' = '#e31a1c', 
@@ -32,10 +37,6 @@ paleta_plantas<-c('cypcal' = '#1f78b4', 'pinlon' = '#e31a1c',
                   'galniv' = '#b2df8a', 'rammyc' = '#fdbf6f',
                   'kracer' = '#fb9a99')
 
-#paleta_plantas<-c('cypcal' = '#4477AA', 'pinlon' = '#AA3377', 
-                  'borpyr' = '#66CCEE', 'genlut' = '#228833',
-                  'galniv' = '#BBBBBB', 'rammyc' = '#CCBB44',
-                  'kracer' = '#EE6677')
 
 # Diferencias en alfa taxo entre poblaciones
 mod0<-glmer(Above_richness~UM_s+(1|Host),
@@ -77,7 +78,8 @@ Beta_Total_taxo<-bind_rows(data.frame('NMDS1' = taxo_points_tot$points[,1],
                                       'UM' = PERDIVER_summary$UM,
                                       'UM_s' = PERDIVER_summary$UM_s,
                                       'Type' = 'Taxo',
-                                      'Comp' = 'Total')) %>%
+                                      'Comp' = 'Total',
+                                      'Location' = 'Above')) %>%
   left_join(., PERDIVER_summary %>% dplyr::select(Host, UM, UM_s, Insect_richness)) %>%
   dplyr::rename('Riq' = Insect_richness) %>%
   dplyr::mutate(group = as.factor(paste(Host, UM_s)))
@@ -105,7 +107,7 @@ Beta_taxo_above<-ggplot(Beta_Total_taxo, aes(x = NMDS1, y = NMDS2))+
   coord_fixed()+
   theme_classic()+
   scale_shape_manual(name = 'Isolation', values = c('S' = 22, 'L' = 21))+
-  ggtitle('(A)')+
+  ggtitle('(a)')+
   xlim(c(-0.6, 0.6))+
   ylim(c(-0.5, 0.4))+
   scale_size_continuous(guide = 'none')+
@@ -132,7 +134,8 @@ Beta_Total_Filo<-bind_rows(data.frame('NMDS1' = filo_points_tot$points[,1],
                                       'UM' = PERDIVER_summary$UM,
                                       'UM_s' = PERDIVER_summary$UM_s,
                                       'Type' = 'Phylo',
-                                      'Comp' = 'Total')) %>%
+                                      'Comp' = 'Total',
+                                      'Location' = 'Above')) %>%
   left_join(., PERDIVER_summary %>% dplyr::select(Host, UM, UM_s, Insect_mpd.obs.z)) %>%
   mutate(group = as.factor(paste(Host, UM_s)))
 
@@ -158,7 +161,7 @@ Beta_filo_above<-ggplot(Beta_Total_Filo, aes(x = NMDS1, y = NMDS2))+
   geom_point(aes(fill = Host, shape = UM_s, size = Insect_mpd.obs.z), color = 'black')+
   theme_classic()+
   scale_shape_manual(name = 'Isolation', values = c('S' = 22, 'L' = 21))+
-  ggtitle('(B)')+
+  ggtitle('(b)')+
   xlim(c(-0.6, 0.6))+
   ylim(c(-0.5, 0.4))+
   coord_fixed()+
@@ -239,7 +242,7 @@ Beta_taxo_below<-ggplot(Beta_Total_Taxo_Below, aes(x = NMDS1, y = NMDS2))+
   geom_point(aes(fill = Host, shape = UM_s, size = Below_richness), color = 'black')+
   theme_classic()+
   scale_shape_manual(name = 'Isolation', values = c('S' = 22, 'L' = 21))+
-  ggtitle('(C)')+
+  ggtitle('(c)')+
   xlim(c(-0.6, 0.6))+
   ylim(c(-0.5, 0.4))+
   coord_fixed()+
@@ -263,7 +266,7 @@ filo_points_below<-metaMDS(PERDIVER_beta_filo_below, try = 100)
 
 Beta_Total_Filo_Below<-data.frame(NMDS1 = filo_points_below$points[,1],
                             NMDS2 = filo_points_below$points[,2],
-                            Type = 'Filo',
+                            Type = 'Phylo',
                             Comp = 'Total',
                             Location = 'Below') %>%
   mutate(Host = unlist(lapply(strsplit(rownames(.), '_'), function(x) x[1]))) %>%
@@ -295,7 +298,7 @@ Beta_filo_below<-ggplot(Beta_Total_Filo_Below, aes(x = NMDS1, y = NMDS2))+
   geom_point(aes(fill = Host, shape = UM_s, size = Below_mpd.obs.z), color = 'black')+
   theme_classic()+
   scale_shape_manual(name = 'Isolation', values = c('S' = 22, 'L' = 21))+
-  ggtitle('(D)')+
+  ggtitle('(d)')+
   xlim(c(-0.6, 0.6))+
   ylim(c(-0.5, 0.4))+
   coord_fixed()+
@@ -314,7 +317,10 @@ Beta_filo_below<-ggplot(Beta_Total_Filo_Below, aes(x = NMDS1, y = NMDS2))+
 
 NMDS_plot<-((Beta_taxo_above+Beta_filo_above)/(Beta_taxo_below+Beta_filo_below))+
   plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-ggsave(NMDS_plot, width = 10, height = 10, units = 'in', filename = 'aaaa.jpeg')
+ggsave(NMDS_plot, width = 10, height = 10, units = 'in',
+       filename = 'C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Figures and tables/Fig_2_NMDS.jpeg')
+ggsave(NMDS_plot, width = 10, height = 10, units = 'in',
+       filename = '~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Figures and tables/Fig_2_NMDS.jpeg')
 
 #### Graficas diferencias ####
 
@@ -378,21 +384,21 @@ p1<-ggplot(z, aes(y = emmean, x = type, color = UM_s))+
   scale_fill_manual(values = paleta_plantas, guide = 'none')+
   scale_shape_manual(name = 'Isolation', values = c('S' = 22, 'L' = 21), guide = 'none')+
   geom_point(position = position_dodge(width = 0.2), size = 5)+
-  geom_linerange(aes(ymax = upper.CL, ymin = lower.CL),
+  geom_errorbar(aes(ymax = upper.CL, ymin = lower.CL),
                  position = position_dodge(width = 0.2),
-                 size = 1)+
+                 size = 1, width = 0.1)+
   geom_line(aes(x = type, y = emmean, group = UM_s),
-            position = position_dodge(width = 0.2), size = 1)+
+            position = position_dodge(width = 0.2), linewidth = 1)+
   theme_classic()+
   ylab('Aboveground \u03B1 diversity')+
   xlab('q')+
   scale_color_manual(values = paleta_tamanyos, guide = 'none')+
   theme(text = element_text(size = 20))+
-  ggtitle('(A)')
+  ggtitle('(a)')
 
 p2<-ggplot(y, aes(x = factor(type, level = c('Below', 'Above')), y = emmean, color = UM_s))+
   geom_jitter(data = points_mpd,
-              aes(fill = Host, x = factor(type, level = c('Below', 'Above')), y = emmean, 
+              aes(fill = Host, x = factor(type, level = c('Above', 'Below')), y = emmean, 
                   shape = UM_s, group = interaction(UM_s, type)), 
               inherit.aes = F,
               position = position_jitterdodge(jitter.width = .05, 
@@ -400,8 +406,9 @@ p2<-ggplot(y, aes(x = factor(type, level = c('Below', 'Above')), y = emmean, col
                                               dodge.width = 0.4),
               size = 2, alpha = 0.65)+
   geom_point(size = 5, position = position_dodge(width = 0.4))+
-  geom_linerange(aes(ymax = upper.CL, ymin = lower.CL), size = 2,
-                 position = position_dodge(width = 0.4))+
+  geom_errorbar(aes(ymax = upper.CL, ymin = lower.CL), linewidth = 1,
+                 position = position_dodge(width = 0.4),
+                 width = 0.15)+
   scale_fill_manual(values = paleta_plantas)+
   scale_shape_manual(values = c('S' = 22, 'L' = 21), name = 'Isolation')+
   coord_fixed(ratio = .45)+
@@ -410,12 +417,12 @@ p2<-ggplot(y, aes(x = factor(type, level = c('Below', 'Above')), y = emmean, col
   scale_color_manual(values = paleta_tamanyos, guide = 'none')+
   theme(text = element_text(size = 20),
         legend.position = 'bottom')+
-  ylab(expression(SES["MPD"]))+
-  ggtitle('(C)')+
+  ylab(expression(MPD["SES"]))+
+  ggtitle('(c)')+
   guides(fill=guide_legend(override.aes=list(shape=21, size = 5)),
          shape=guide_legend(override.aes=list(shape =c(0,1), 
                                               size = 5)))+
-  scale_x_discrete(labels = c('Belowground', 'Aboveground'))
+  scale_x_discrete(labels = c('Aboveground', 'Belowground'))
 
 
 p3<-ggplot(x, aes(y = emmean, x = type, color = UM_s))+
@@ -430,9 +437,9 @@ p3<-ggplot(x, aes(y = emmean, x = type, color = UM_s))+
   scale_fill_manual(values = paleta_plantas, guide = 'none')+
   scale_shape_manual(name = 'Isolation', values = c('S' = 22, 'L' = 21), guide = 'none')+
   geom_point(position = position_dodge(width = 0.2), size = 5)+
-  geom_linerange(aes(ymax = upper.CL, ymin = lower.CL),
+  geom_errorbar(aes(ymax = upper.CL, ymin = lower.CL),
                  position = position_dodge(width = 0.2),
-                 size = 1)+
+                 size = 1, width = 0.1)+
   geom_line(aes(x = type, y = emmean, group = UM_s),
             position = position_dodge(width = 0.2), size = 1)+
   theme_classic()+
@@ -440,10 +447,11 @@ p3<-ggplot(x, aes(y = emmean, x = type, color = UM_s))+
   xlab('q')+
   scale_color_manual(values = paleta_tamanyos, guide = 'none')+
   theme(text = element_text(size = 20))+
-  ggtitle('(B)')
+  ggtitle('(b)')
 
 ANOVA_plot<-((p1/p3)|p2)+plot_layout(guides = 'collect')&theme(legend.position = 'bottom')
-ggsave(ANOVA_plot, filename = 'bbbb.jpeg',
+ggsave(ANOVA_plot, 
+       filename = 'C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Figures and tables/Fig_1_Differences.jpeg',
        width = 14, height = 9, units = 'in')
 
 ### Correlation between above-below
@@ -452,15 +460,59 @@ library(rstatix)
 library(corrplot)
 
 dat<-PERDIVER_summary %>%
-  dplyr::select(c(Above_richness, Above_shannon, Above_simpson,
+  dplyr::select(c(Host, Above_richness, Above_shannon, Above_simpson,
                   Below_richness, Below_shannon, Below_simpson,
                   Insect_mpd.obs.z, Below_mpd.obs.z)) %>%
   mutate(Above_shannon = exp(Above_shannon),
          Above_simpson = (1/(1-Above_simpson)),
          Below_shannon = exp(Below_shannon),
-         Below_simpson = (1/(1-Below_simpson))) %>%
-  cor_test(method = 'pearson')
+         Below_simpson = (1/(1-Below_simpson)))
 
+  
+#### Correlograma simplificado ####
+  b<-list(cor.test(dat$Above_richness, dat$Below_richness),
+          cor.test(dat$Above_shannon, dat$Below_shannon),
+          cor.test(dat$Above_simpson, dat$Below_simpson),
+          cor.test(dat$Insect_mpd.obs.z, dat$Below_mpd.obs.z))
+  c<-list(ecodist::mantel(lower(PERDIVER_beta_taxo)~lower(PERDIVER_beta_taxo_below)),
+          ecodist::mantel(lower(PERDIVER_beta_filo)~lower(PERDIVER_beta_filo_below)))
+  
+  z<-data.frame(x = 1:6, y = 1, 
+                stat = c(unlist(lapply(b, function(x) x$estimate)),
+                         unlist(lapply(c, function(x) x[1]))),
+                lower = c(unlist(lapply(b, function(x) x$conf.int[1])),
+                          unlist(lapply(c, function(x) x[5]))),
+                upper = c(unlist(lapply(b, function(x) x$conf.int[2])),
+                          unlist(lapply(c, function(x) x[6]))),
+                var1 =c('<sup>0</sup>D', '<sup>1</sup>D', '<sup>2</sup>D', 
+                        'MPD<sub>SES</sub>', '\u03B2<sub>Taxo</sub>', '\u03B2<sub>Phylo</sub>'))
+z$ast <- ifelse(z$lower < 0 & z$upper > 0, '', '***')
+correlation_plot <- ggplot(z, aes(x = x, y = y+0.05))+
+    geom_rect(aes(xmin = x-0.5, xmax = x+0.5, ymin = y-0.5, ymax = y+0.5, 
+                  fill = stat, color = ast), alpha = 0.5, linewidth = 1.5)+
+    geom_text(aes(label = round(stat, 3)), size = 15)+
+    geom_text(aes(x = x, y = y-0.15, 
+                  label = paste('[', round(lower, 3), ', ', round(upper, 3), ']', sep = '')),
+              size = 7)+
+    geom_richtext(aes(x = x, y = y+0.58, label = var1), size = 10,
+                  fill = NA, label.color = NA)+
+    geom_text(aes(x = x, y = y-0.3, label = ast), size = 10)+
+    theme_void()+
+    coord_fixed()+
+    scale_fill_gradient(low = '#FFB000', high = '#648FFF',
+                         name = 'Correlation')+
+    theme(plot.margin = margin(t = 0, r = 0, b = 0, l = 0, "cm"),
+          legend.position = 'bottom',
+          text = element_text(size = 20))+
+    ylim(c(0.5, 1.8))+
+  scale_color_manual(values = c('\\' = 'black', '***' = 'black'),
+                     guide = 'none')
+ggsave(correlation_plot, 
+       filename = 'C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Figures and tables/Fig_4_Correlation.jpeg',
+       width = 14, height = 9, units = 'in')
+
+
+### Correlograma completo
 a<-list(mantel(PERDIVER_beta_taxo, PERDIVER_beta_taxo, 'pearson'),
         mantel(PERDIVER_beta_taxo, PERDIVER_beta_filo, 'pearson'),
         mantel(PERDIVER_beta_taxo, PERDIVER_beta_taxo_below, 'pearson'),
@@ -493,7 +545,7 @@ b$method<-'pearson'
 c<-rbind(dat, b)
 varnames<-c('$Above*phantom(0)^0*D', '$Above*phantom(0)^1*D', '$Above*phantom(0)^2*D', 
             '$Below*phantom(0)^0*D', '$Below*phantom(0)^1*D', '$Below*phantom(0)^2*D',
-            '$Above*phantom(0)[ses]*MPD', '$Below*phantom(0)[ses]*MPD',
+            '$Above*phantom(0)[MPD]*ses', '$Below*phantom(0)[MPD]*ses',
             '$Above~beta[taxo]', '$Above~beta[phylo]',
             '$Below~beta[taxo]', '$Below~beta[phylo]')
 d<-cor_spread(c)
@@ -538,15 +590,16 @@ temp<-do.call('rbind', lapply(list(PERDIVER_beta_taxo, PERDIVER_beta_filo,
                                    PERDIVER_beta_taxo_below, PERDIVER_beta_filo_below),
                               function(x) dist_groups(x, g = PERDIVER_summary$UM_s)))
 Data_dist<-temp %>%
-  mutate(Type = rep(c('Taxo', 'Filo'), each = 378, times = 2),
+  mutate(Type = rep(c('Taxo', 'Phylo'), each = 378, times = 2),
          Location = rep(c('Above', 'Below'), each = 2*378)) %>%
   mutate(Host = unlist(lapply(strsplit(Item1, '_'), function(x) x[1])),
          UM = unlist(lapply(strsplit(Item1, '_'), function(x) x[2])),
          Host2 = unlist(lapply(strsplit(Item2, '_'), function(x) x[1])),
          UM2 = unlist(lapply(strsplit(Item2, '_'), function(x) x[2]))) %>%
-  filter(Host == Host2) %>%
+  filter(Host == Host2) %>% 
+  mutate(Groups = paste(UM, UM2, sep = '_')) %>% 
   select(-c(Item1, Item2, Group1, Group2, Host2, UM2)) %>%
-  mutate(Type = factor(Type, levels = c('Taxo', 'Filo')))
+  mutate(Type = factor(Type, levels = c('Taxo', 'Phylo'))) 
 
 
 Data_dist_mean<-Data_dist %>%
@@ -554,33 +607,75 @@ Data_dist_mean<-Data_dist %>%
   summarise(Host = Host,
             Label = Label,
             Dist = mean(Distance),
-            SD = sd(Distance)) %>%
+            SD = sd(Distance), 
+            SE = 1.96*SD/sqrt(n())) %>%
   distinct()
 
-pp<-(ggplot(Data_dist_mean %>% filter(Location == 'Above'), aes(x = interaction(Label, Host), y = Dist))+
-    geom_bar(stat = 'identity', aes(fill = Host), color = 'black')+
-    geom_errorbar(aes(ymax = Dist+SD,
-                      ymin = Dist-SD),
+pp<-(ggplot(Data_dist_mean %>% 
+              filter(Location == 'Above'), 
+            aes(x = interaction(Label, Host), y = Dist))+
+       geom_bar_pattern(stat = 'identity', aes(pattern_density = Label, pattern = Label, fill = Host), color = 'black')+
+    geom_errorbar(aes(ymax = Dist+SE,
+                      ymin = Dist-SE),
                   width = 0.3)+
     theme_classic2()+
     scale_x_discrete(position = 'bottom')+
+    scale_fill_manual(values = paleta_plantas)+
     theme(axis.title = element_blank(),
           legend.position = 'none',
           axis.text.x = element_blank(),
           strip.background = element_blank(),
           strip.text = element_blank())+
     facet_wrap(~Type, strip.position = 'bottom'))/
-  (ggplot(Data_dist_mean %>% filter(Location == 'Below'), aes(x = interaction(Label, Host), y = Dist))+
-  geom_bar(stat = 'identity', aes(fill = Host), color = 'black')+
-  geom_errorbar(aes(ymax = Dist+SD,
-                    ymin = Dist-SD),
+  (ggplot(Data_dist_mean %>% 
+            filter(Location == 'Below'), 
+          aes(x = interaction(Label, Host), y = Dist))+
+  geom_bar_pattern(stat = 'identity', aes(pattern_density = Label, pattern = Label, fill = Host), color = 'black')+
+  geom_errorbar(aes(ymax = Dist+SE,
+                    ymin = Dist-SE),
                 width = 0.3)+
   theme_classic2()+
   scale_y_reverse()+
   scale_x_discrete(position = 'top')+
+  scale_fill_manual(values = paleta_plantas)+
   theme(axis.title = element_blank(),
-        axis.text.x = element_blank(),
-        legend.position = 'none',
-        strip.background = element_blank(),
-        strip.text = element_blank())+
+        axis.text.x = element_blank())+
   facet_wrap(~Type))
+pp
+
+dist_AT<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
+          filter(Location == 'Above' & Type == 'Taxo')))
+
+dist_AP<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
+          filter(Location == 'Above' & Type == 'Phylo')))
+
+dist_BT<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
+          filter(Location == 'Below' & Type == 'Taxo')))
+
+dist_BP<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
+          filter(Location == 'Below' & Type == 'Phylo')))
+
+dist_all <- rbind(ls_means(dist_AT), ls_means(dist_AP),
+      ls_means(dist_BT), ls_means(dist_BP))
+dist_all$Type <- rep(c('Taxo', 'Phylo'), each = 2)
+dist_all$Location <- rep(c('Above', 'Above', 'Below', 'Below'), each = 2)
+dist_all$Label <- rep(str_remove(rownames(dist_all)[1:2], 'Label'), times = 4)
+
+q<-ggplot(dist_all, aes(y = Estimate, x = Type))+
+  theme_classic()+
+  geom_point(aes(group = interaction(Location, Label), color = Label),
+             position = position_dodge(width = 0.2),
+             size = 5)+
+  geom_errorbar(aes(ymax = upper, ymin = lower,
+                     group = interaction(Location, Label),
+                    color = Label),
+                 position = position_dodge(width = 0.2),
+                 linewidth = 1,
+                width = .05)+
+  facet_wrap(~Location, ncol = 1)+
+  scale_color_manual(values = c('Between L and S' = 'firebrick',
+                                'Within L' = 'forestgreen'))+
+  ylab('Average dissimilarity')+
+  theme(text = element_text(size = 20))
+q
+confint()

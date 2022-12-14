@@ -1,4 +1,4 @@
-library(V.PhyloMaker)
+library(V.PhyloMaker2)
 library(picante)
 library(tidyverse)
 library(phangorn)

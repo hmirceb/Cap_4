@@ -9,44 +9,32 @@ library(readxl)
 library(ggpubr)
 library(hillR)
 library(spaa)
+rm(list = ls())
+setwd('~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions')
+setwd('C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions')
 
-load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
-load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Filo_PERDIVER.Rdata")
-plantas_PERDIVER<-read_excel("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Datos/Plantas/Habitat_PERDIVER.xlsx")
-PERDIVER_abiotic<-read_excel("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Datos/PERDIVER_abiotic.xlsx")
-load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/zOTUs_Alfadiversidad.Rdata")
-load("~/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/ses.mpd.output.all_bySp.RData")
+
+load("Resultados/PERDIVER_Comm_Data.RData")
+load("Resultados/Filo_PERDIVER_ALT.Rdata")
+plantas_PERDIVER<-read_excel("Datos/Plantas/Habitat_PERDIVER.xlsx")
+PERDIVER_abiotic<-read_excel("Datos/PERDIVER_abiotic.xlsx")
+load("Resultados/Joan/zOTUs_Alfadiversidad.Rdata")
+load("Resultados/Joan/ses.mpd.output.all_bySp.RData")
 load("/home/hector/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/PhylogeneticDist_phyloresembl_14000Reads.Rdata")
 load("/home/hector/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/TaxonomicDist_14000Reads.Rdata")
-
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/PERDIVER_Comm_Data.RData")
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Filo_PERDIVER.Rdata")
-plantas_PERDIVER<-read_excel("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Datos/Plantas/Habitat_PERDIVER.xlsx")
-PERDIVER_abiotic<-read_excel("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Datos/PERDIVER_abiotic.xlsx")
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/zOTUs_Alfadiversidad.Rdata")
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/ses.mpd.output.all_bySp.RData")
-load("C:/Users/18172844S/Dropbox/DATA__LAB/Hector_tesis/Cap. 4 - Plant population size interactions/Resultados/Joan/TaxonomicDist_14000Reads.Rdata")
-
-# Funcion para calcular SD de una lista de matrices
-sd.list <- function(lst) {n <- length(lst)
-rc <- dim(lst[[1]]) 
-ar1 <- array(unlist(lst), c(rc, n)) 	   
-apply(ar1, c(1, 2), sd)
-}
 
 # Distancia filo entre especies media (de todos los arboles)
 cophenetic_mean<-mean.list(lapply(filo_perdiver, cophenetic))
 
 # Matriz de sitios por especies
 
-PERDIVER_sitesXsps_filo<-PERDIVER %>%
-  filter(Clase == 'Insecta') %>%
+PERDIVER_sitesXsps<-PERDIVER  %>%
   dplyr::select(c(Host, UM, Species)) %>%
   mutate(UM_s = ifelse(startsWith(UM, 'S'), 'S', 'L')) %>%
   group_by(Host, UM, Species, UM_s) %>%
-  dplyr::summarize(Host = Host,
-            UM = UM,
-            UM_s = UM_s,
+  dplyr::summarize(Host,
+            UM,
+            UM_s,
             Species,
             n = n()) %>%
   distinct() %>%
@@ -55,8 +43,28 @@ PERDIVER_sitesXsps_filo<-PERDIVER %>%
               values_from = n,
               values_fill = 0) %>%
   ungroup()
+PERDIVER_sitesXsps<-as.data.frame(PERDIVER_sitesXsps)
+rownames(PERDIVER_sitesXsps)<-paste(PERDIVER_sitesXsps$Host, PERDIVER_sitesXsps$UM, sep = '_')
+
+PERDIVER_sitesXsps_filo<-PERDIVER %>%
+  filter(Clase == 'Insecta') %>%
+  dplyr::select(c(Host, UM, Species)) %>%
+  mutate(UM_s = ifelse(startsWith(UM, 'S'), 'S', 'L')) %>%
+  group_by(Host, UM, Species, UM_s) %>%
+  dplyr::summarize(Host = Host,
+                   UM = UM,
+                   UM_s = UM_s,
+                   Species,
+                   n = n()) %>%
+  distinct() %>%
+  pivot_wider(names_from = Species,
+              id_cols = c(Host, UM, UM_s),
+              values_from = n,
+              values_fill = 0) %>%
+  ungroup()
 PERDIVER_sitesXsps_filo<-as.data.frame(PERDIVER_sitesXsps_filo)
 rownames(PERDIVER_sitesXsps_filo)<-paste(PERDIVER_sitesXsps_filo$Host, PERDIVER_sitesXsps_filo$UM, sep = '_')
+
 
 # Matriz de sitios por especies para las plantas coocurrentes
 PLANTS_sitesXsps<-plantas_PERDIVER %>%
@@ -102,7 +110,7 @@ PERDIVER_alpha_taxo<-PERDIVER_alpha_taxo %>%
 
 ### TAXO Beta diversity
 # Distancia con bray curtis (considera las abundancias)
-PERDIVER_beta_taxo<-vegdist(decostand(PERDIVER_sitesXsps_filo[,-c(1:3)], 'hellinger'),
+PERDIVER_beta_taxo<-vegdist(decostand(PERDIVER_sitesXsps[,-c(1:3)], 'hellinger'),
                             method = 'bray')
 
 ###############################
@@ -144,7 +152,7 @@ PERDIVER_alpha_filo<-as.data.frame(do.call('rbind', temp_mpd))
 PERDIVER_beta_filo_list<-lapply(filo_perdiver, function(y) phyloresembl(x = decostand(PERDIVER_sitesXsps_filo[,-c(1:3)], 'hellinger'),
                                                                         phy = y, incidence = F, 'sorensen'))
 
-PERDIVER_beta_filo<-unname(as.dist(mean.list(lapply(PERDIVER_beta_filo_list, function(x) as.matrix(x)))))
+PERDIVER_beta_filo<-as.dist(mean.list(lapply(PERDIVER_beta_filo_list, function(x) as.matrix(x))))
 
 #### Tabla resumen ####
 
@@ -288,11 +296,11 @@ z<-a %>%
 PERDIVER_beta_taxo_below<-list2dist(z)
 
 # Igual pero para la filo
-a<-dist2list(phyl.dist)
-a$col<-as.character(a$col)
-a$row<-as.character(a$row)
+b<-dist2list(phyl.dist)
+b$col<-as.character(b$col)
+b$row<-as.character(b$row)
 
-z<-a %>%
+q<-b %>%
   left_join((id_plots %>%
                rename(col = sample) %>%
                dplyr::select(c(col, plot))),
@@ -315,7 +323,7 @@ z<-a %>%
          row = as.factor(row))  %>%
   as.data.frame()
 
-PERDIVER_beta_filo_below<-list2dist(z)
+PERDIVER_beta_filo_below<-list2dist(q)
 
 ### Beta diversidad de plantas coocurrentes
 PERDIVER_beta_plants<-vegdist(decostand(PLANTS_sitesXsps[,-c(1:3)], 'hellinger'),
