@@ -42,10 +42,13 @@ paleta_plantas<-c('cypcal' = '#1f78b4', 'pinlon' = '#e31a1c',
 mod0<-glmer(Above_richness~UM_s+(1|Host),
             family = 'poisson', 
             data = PERDIVER_summary)
+Anova(mod0)
 mod1<-lmer(exp(Above_shannon)~UM_s+(1|Host), 
            data = PERDIVER_summary)
+Anova(mod1)
 mod2<-lmer((1/(1-Above_simpson))~UM_s+(1|Host), 
            data = PERDIVER_summary)
+Anova(mod2)
 
 # Filo community structure above
 mod_p0<-lmer(Insect_mpd.obs.z~UM_s+(1|Host), 
@@ -183,10 +186,13 @@ Beta_filo_above<-ggplot(Beta_Total_Filo, aes(x = NMDS1, y = NMDS2))+
 ##########################
 mod0_b<-lmer(Below_richness~UM_s+(1|Host), 
             data = PERDIVER_summary)
+Anova(mod0_b)
 mod1_b<-lmer(exp(Below_shannon)~UM_s+(1|Host), 
            data = PERDIVER_summary)
+Anova(mod1_b)
 mod2_b<-lmer(1/(1-Below_simpson)~UM_s+(1|Host), 
            data = PERDIVER_summary)
+Anova(mod2_b)
 
 # Filo community structure below
 mod_p0_b<-lmer(Below_mpd.obs.z~UM_s+(1|Host), 

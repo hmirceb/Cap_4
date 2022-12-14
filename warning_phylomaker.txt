@@ -1,0 +1,6 @@
+genus family_in_sp.list family_in_tree
+54      Gnorimus        Cetoniidae   Scarabaeidae
+96       Opomyza       Tephritidae   Heleomyzidae
+106 Phyllopertha         Rutelidae   Scarabaeidae
+120   Sarcophaga        Tachinidae  Sarcophagidae
+130   Stomorhina     Calliphoridae      Rhiniidae
