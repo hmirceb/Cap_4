@@ -39,21 +39,20 @@ paleta_plantas<-c('cypcal' = '#1f78b4', 'pinlon' = '#e31a1c',
 
 
 # Diferencias en alfa taxo entre poblaciones
-mod0<-glmer(Above_richness~UM_s+(1|Host),
-            family = 'poisson', 
+mod0<-lmerTest::lmer(Above_richness~UM_s+(1|Host), 
             data = PERDIVER_summary)
-Anova(mod0)
-mod1<-lmer(exp(Above_shannon)~UM_s+(1|Host), 
+anova(mod0)
+mod1<-lmerTest::lmer(exp(Above_shannon)~UM_s+(1|Host), 
            data = PERDIVER_summary)
-Anova(mod1)
-mod2<-lmer((1/(1-Above_simpson))~UM_s+(1|Host), 
+anova(mod1)
+mod2<-lmerTest::lmer((1/(1-Above_simpson))~UM_s+(1|Host), 
            data = PERDIVER_summary)
-Anova(mod2)
+anova(mod2)
 
 # Filo community structure above
-mod_p0<-lmer(Insect_mpd.obs.z~UM_s+(1|Host), 
+mod_p0<-lmerTest::lmer(Insect_mpd.obs.z~UM_s+(1|Host), 
              data = PERDIVER_summary)
-Anova(mod_p0)
+anova(mod_p0)
 
 ### Beta diversity
 ### PERMANOVA above ###
@@ -184,20 +183,20 @@ Beta_filo_above<-ggplot(Beta_Total_Filo, aes(x = NMDS1, y = NMDS2))+
 ##########################
 ###### Below ground ######
 ##########################
-mod0_b<-lmer(Below_richness~UM_s+(1|Host), 
+mod0_b<-lmerTest::lmer(Below_richness~UM_s+(1|Host), 
             data = PERDIVER_summary)
-Anova(mod0_b)
-mod1_b<-lmer(exp(Below_shannon)~UM_s+(1|Host), 
+anova(mod0_b)
+mod1_b<-lmerTest::lmer(exp(Below_shannon)~UM_s+(1|Host), 
            data = PERDIVER_summary)
-Anova(mod1_b)
-mod2_b<-lmer(1/(1-Below_simpson)~UM_s+(1|Host), 
+anova(mod1_b)
+mod2_b<-lmerTest::lmer(1/(1-Below_simpson)~UM_s+(1|Host), 
            data = PERDIVER_summary)
-Anova(mod2_b)
+anova(mod2_b)
 
 # Filo community structure below
-mod_p0_b<-lmer(Below_mpd.obs.z~UM_s+(1|Host), 
+mod_p0_b<-lmerTest::lmer(Below_mpd.obs.z~UM_s+(1|Host), 
              data = PERDIVER_summary)
-Anova(mod_p0_b)
+anova(mod_p0_b)
 
 ### Permanova below ####
 
@@ -518,79 +517,6 @@ ggsave(correlation_plot,
        width = 14, height = 9, units = 'in')
 
 
-### Correlograma completo
-a<-list(mantel(PERDIVER_beta_taxo, PERDIVER_beta_taxo, 'pearson'),
-        mantel(PERDIVER_beta_taxo, PERDIVER_beta_filo, 'pearson'),
-        mantel(PERDIVER_beta_taxo, PERDIVER_beta_taxo_below, 'pearson'),
-        mantel(PERDIVER_beta_taxo, PERDIVER_beta_filo_below, 'pearson'),
-        
-        mantel(PERDIVER_beta_filo, PERDIVER_beta_filo, 'pearson'),
-        mantel(PERDIVER_beta_filo, PERDIVER_beta_taxo, 'pearson'),
-        mantel(PERDIVER_beta_filo, PERDIVER_beta_taxo_below, 'pearson'),
-        mantel(PERDIVER_beta_filo, PERDIVER_beta_filo_below, 'pearson'),
-        
-        mantel(PERDIVER_beta_taxo_below, PERDIVER_beta_taxo_below, 'pearson'),
-        mantel(PERDIVER_beta_taxo_below, PERDIVER_beta_taxo, 'pearson'),
-        mantel(PERDIVER_beta_taxo_below, PERDIVER_beta_filo, 'pearson'),
-        mantel(PERDIVER_beta_taxo_below, PERDIVER_beta_filo_below, 'pearson'),
-        
-        mantel(PERDIVER_beta_filo_below, PERDIVER_beta_filo_below, 'pearson'),
-        mantel(PERDIVER_beta_filo_below, PERDIVER_beta_taxo, 'pearson'),
-        mantel(PERDIVER_beta_filo_below, PERDIVER_beta_taxo_below, 'pearson'),
-        mantel(PERDIVER_beta_filo_below, PERDIVER_beta_filo, 'pearson'))
-
-b<-data.frame(var1 = unlist(lapply(a, function(x) as.character(x$call$xdis))),
-              var2 = unlist(lapply(a, function(x) as.character(x$call$ydis))))
-b$cor<-unlist(lapply(a, function(x) as.numeric(x$statistic)))
-b$statistic<-ifelse(b$var1 == b$var2, Inf, 0.00000000001)
-b$p<-unlist(lapply(a, function(x) as.numeric(x$signif)))
-b$conf.low<-ifelse(b$var1 == b$var2, 1, 0.00000000001)
-b$conf.high<-ifelse(b$var1 == b$var2, 1, 0.00000000001)
-b$method<-'pearson'
-
-c<-rbind(dat, b)
-varnames<-c('$Above*phantom(0)^0*D', '$Above*phantom(0)^1*D', '$Above*phantom(0)^2*D', 
-            '$Below*phantom(0)^0*D', '$Below*phantom(0)^1*D', '$Below*phantom(0)^2*D',
-            '$Above*phantom(0)[MPD]*ses', '$Below*phantom(0)[MPD]*ses',
-            '$Above~beta[taxo]', '$Above~beta[phylo]',
-            '$Below~beta[taxo]', '$Below~beta[phylo]')
-d<-cor_spread(c)
-d<-as.matrix(d[,-1]) 
-colnames(d)<-varnames
-rownames(d)<-colnames(d)
-
-p<-cor_spread(c, value = 'p')
-p<-as.matrix(p[,-1])
-colnames(p)<- varnames
-rownames(p)<-colnames(p)
-
-trace(corrplot, edit=TRUE)
-# Then replace on line 443
-# place_points = function(sig.locs, point) {
-# text(pos.pNew[, 1][sig.locs], (pos.pNew[, 2][sig.locs])-0.25, 
-#     labels = point, col = pch.col, cex = pch.cex, 
-#     lwd = 2)
-
-jpeg(filename = 'Correlation_plot.jpeg', res = 300, width = 30, height = 30, units = 'cm')
-corrplot(corr = d,
-         method = 'color',
-         type = 'lower',
-         diag = F,
-         na.label.col = 'white',
-         addCoef.col = 'black',
-         outline = T,
-         p.mat = p,
-         insig = 'label_sig',
-         pch.cex = 2.5,
-         number.digits = 2,
-         tl.col = 'black',
-         pch.col = 'black',
-         number.cex = 1.4,
-         tl.srt = 45,
-         tl.cex = 1.5)
-dev.off()
-
-
 #### Prueba con distancias de centroides ####
 temp<-do.call('rbind', lapply(list(PERDIVER_beta_taxo, PERDIVER_beta_filo,
                                    PERDIVER_beta_taxo_below, PERDIVER_beta_filo_below),
@@ -647,7 +573,7 @@ pp<-(ggplot(Data_dist_mean %>%
   theme(axis.title = element_blank(),
         axis.text.x = element_blank())+
   facet_wrap(~Type))
-pp
+
 
 dist_AT<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
           filter(Location == 'Above' & Type == 'Taxo')))
@@ -685,3 +611,11 @@ q<-ggplot(dist_all, aes(y = Estimate, x = Type))+
   theme(text = element_text(size = 20))
 q
 confint()
+
+
+##### Tabla modelos ######
+write.table(rbind(anova(mod0), anova(mod1), anova(mod2),
+      anova(mod0_b), anova(mod1_b), anova(mod2_b),
+      anova(mod_p0), anova(mod_p0_b)), file = 'mod.txt', sep = '\t', dec = ',')
+
+
