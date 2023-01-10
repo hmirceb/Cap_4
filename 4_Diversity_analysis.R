@@ -351,7 +351,7 @@ y<-rbind(d, d_b)
 y$type<-rep(c('Above', 'Below'), each = 2)
 y$type
 
-paleta_tamanyos<-c('L' = 'forestgreen', 'S' = 'firebrick')
+paleta_tamanyos<-c('L' = '#0072B2', 'S' = '#D55E00')
 
 # Preparamos puntos para poner luego en los plots
 points_above<-PERDIVER_summary %>%
@@ -577,16 +577,16 @@ pp<-(ggplot(Data_dist_mean %>%
 
 dist_AT<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
           filter(Location == 'Above' & Type == 'Taxo')))
-
+anova(dist_AT)
 dist_AP<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
           filter(Location == 'Above' & Type == 'Phylo')))
-
+anova(dist_AP)
 dist_BT<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
           filter(Location == 'Below' & Type == 'Taxo')))
-
+anova(dist_BT)
 dist_BP<-lmer(Distance~Label+(1|Host), data = (Data_dist %>% 
           filter(Location == 'Below' & Type == 'Phylo')))
-
+anova(dist_BP)
 dist_all <- rbind(ls_means(dist_AT), ls_means(dist_AP),
       ls_means(dist_BT), ls_means(dist_BP))
 dist_all$Type <- rep(c('Taxo', 'Phylo'), each = 2)
@@ -609,8 +609,6 @@ q<-ggplot(dist_all, aes(y = Estimate, x = Type))+
                                 'Within L' = 'forestgreen'))+
   ylab('Average dissimilarity')+
   theme(text = element_text(size = 20))
-q
-confint()
 
 
 ##### Tabla modelos ######

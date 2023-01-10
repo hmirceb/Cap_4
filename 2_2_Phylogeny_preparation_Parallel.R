@@ -32,9 +32,9 @@ rm(PERDIVER)
 
 # Matriz de especies a injertar
 matriz_Perdiver<-PERDIVER_insectos %>%
-  dplyr::select(c(Species, Family_final, Order_final)) %>%
+  dplyr::select(c(Species, family, order)) %>%
   mutate(genus = unlist(lapply(strsplit(Species, '_'), function(x) x[1]))) %>%
-  dplyr::rename(species = Species, family = Family_final, order = Order_final) %>%
+  dplyr::rename(species = Species, family = family, order = order) %>%
   dplyr::select(c(species, genus, family, order)) %>%
   distinct() 
 
@@ -78,7 +78,7 @@ filo_perdiver<-foreach(K = 1:n_trees,
   # Primero sacamos el nodo donde se va a injertar cada especie y despues 
   # las anyadimos todas a la vez.
   
-  arbol<-temp_phylo$tree.scenario.2$run.1
+  arbol<-temp_phylo$tree.scenario.2
   rm(temp_phylo); gc()
   
   missing_sps_with_family<-matriz_Perdiver %>%
@@ -90,10 +90,10 @@ filo_perdiver<-foreach(K = 1:n_trees,
   for (i in 1:length(missing_sps_with_family)) {
     temp_family<-PERDIVER_insectos %>% 
       filter(Species == missing_sps_with_family[[i]]) %>%
-      pull(Family_final) %>%
+      pull(family) %>%
       unique(.)
     temp_tips<-unique(c(PERDIVER_insectos %>%
-                          filter(Family_final == temp_family) %>%
+                          filter(family == temp_family) %>%
                           filter(Species %in% arbol$tip.label) %>%
                           pull(Species),
                         info_tips_Chester %>%
@@ -130,10 +130,10 @@ filo_perdiver<-foreach(K = 1:n_trees,
   for (i in 1:length(missing_sps)) {
     temp_order<-PERDIVER_insectos %>% 
       filter(Species == missing_sps[[i]]) %>%
-      pull(Order_final) %>%
+      pull(order) %>%
       unique(.)
     temp_tips<-unique(c(PERDIVER_insectos %>%
-                          filter(Order_final == temp_order) %>%
+                          filter(order == temp_order) %>%
                           filter(Species %in% arbol$tip.label) %>%
                           pull(Species),
                         info_tips_Chester %>%
